@@ -1,0 +1,9 @@
+[package]
+name = "arts"
+version = "0.1.0"
+authors = ["nth"]
+edition = "2018"
+
+[dependencies]
+clap = "2"
+image = "0.23.14"
