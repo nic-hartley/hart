@@ -35,16 +35,15 @@ pub struct Octaves<N: Noise2D> {
 impl<N: Noise2D> Noise2D for Octaves<N> {
   fn get(&self, x: f32, y: f32) -> f32 {
     // base layer
-    let mut max: f32 = 0.0;
-    let mut sum: f32 = 0.0;
-    for i in 0..self.count {
-      let zoom = self.zoom.powf(i as f32);
-      let scale = self.scale.powf(i as f32);
+    let mut max = 0.0;
+    let mut sum = 0.0;
+    let mut zoom = 1.0;
+    let mut scale = 1.0;
+    for _ in 0..self.count {
       sum += self.orig.get(x * zoom, y * zoom) * scale;
       max += scale;
-    }
-    if sum > max || sum < 0.0 {
-      panic!("x={}, y={}, sum={}, max={}", x, y, sum, max);
+      zoom *= self.zoom;
+      scale *= self.scale;
     }
     sum / max
   }

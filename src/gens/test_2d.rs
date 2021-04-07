@@ -13,10 +13,10 @@ use {
   },
 };
 
-const WIDTH: usize = 3840;
-const HEIGHT: usize = 2160;
-const PIX_WIDTH: f32 = 250.0;
-const PIX_HEIGHT: f32 = 250.0;
+const WIDTH: usize = 2000;
+const HEIGHT: usize = 2000;
+const PIX_WIDTH: f32 = 50.0;
+const PIX_HEIGHT: f32 = 50.0;
 
 pub struct Test2D;
 
@@ -32,7 +32,7 @@ impl super::Gen for Test2D {
   }
   fn run(&self, opts: &ArgMatches, seed: &[u8], output: &mut dyn io::Write) -> super::Result<()> {
     let checker = Checkerboard::new(seed);
-    let octaves = if opts.is_present("octave") { 3 } else { 1 };
+    let octaves = if opts.is_present("octave") { 7 } else { 1 };
     let noise = checker.octaves(octaves, consts::SQRT_2, consts::FRAC_1_SQRT_2);
     let mut data_out = [0; WIDTH * HEIGHT];
     println!("Generating...");

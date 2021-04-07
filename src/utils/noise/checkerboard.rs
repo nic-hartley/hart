@@ -15,10 +15,8 @@ impl super::Noise2D for Checkerboard {
     let x = x as isize;
     let y = y as isize;
     if (x + y + self.bias) % 2 == 0 {
-      // println!("x={}, y={}, r={}", x, y, 1.0);
       1.0
     } else {
-      // println!("x={}, y={}, r={}", x, y, 0.0);
       0.0
     }
   }
