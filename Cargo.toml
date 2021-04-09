@@ -7,3 +7,6 @@ edition = "2018"
 [dependencies]
 clap = "2"
 image = "0.23.14"
+rand = "0.8.3"
+rust-crypto = "0.2.36"
+rayon = "1.5.0"

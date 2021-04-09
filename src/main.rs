@@ -41,7 +41,7 @@ fn mk_app() -> App<'static, 'static> {
         .possible_values(&Shell::variants())
         .default_value("zsh")));
 
-  for gen in gens::Gen::all() {
+  for gen in &gens::Gen::all() {
     let subcmd = SubCommand::with_name(gen.command())
       .about(gen.about());
     let added = gen.setup_cmd(subcmd);

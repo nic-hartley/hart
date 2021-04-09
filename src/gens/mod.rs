@@ -52,18 +52,20 @@ pub trait Gen: Sync {
 }
 
 impl dyn Gen {
-  pub fn all() -> &'static [&'static dyn Gen] {
-    &[
+  pub fn all() -> [&'static dyn Gen; 2] {
+    [
       &TestAscii,
       &Test2D,
     ]
   }
 
   pub fn by_command(name: &str) -> Option<&'static dyn Gen> {
-    match name {
-      "test-ascii" => Some(&TestAscii),
-      "test-2d" => Some(&Test2D),
-      _ => None
+    let all = Self::all();
+    for i in 0..all.len() {
+      if all[i].command() == name {
+        return Some(all[i]);
+      }
     }
+    None
   }
 }

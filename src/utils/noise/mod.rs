@@ -1,5 +1,3 @@
-mod worley;
-// pub use worley::Worley
 mod checkerboard;
 pub use checkerboard::Checkerboard;
 
@@ -13,7 +11,7 @@ pub trait Noise2D {
   /// Count is the total number of octaves to apply. Each means more work for more complexity. Should be >0.
   /// Zoom is the amount to shrink each subsequent layer by (by "zooming out" on the original noise); it should be >1.
   /// Scale is the amount by which the effect shrinks every layer; it should be between 0 and 1.
-  fn octaves(self, count: isize, zoom: f32, scale: f32) -> Octaves<Self>
+  fn octaves(self, count: usize, zoom: f32, scale: f32) -> Octaves<Self>
   where
     Self: Sized
   {
@@ -27,7 +25,7 @@ pub trait Noise2D {
 
 pub struct Octaves<N: Noise2D> {
   orig: N,
-  count: isize,
+  count: usize,
   zoom: f32,
   scale: f32,
 }
