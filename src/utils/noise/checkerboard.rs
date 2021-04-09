@@ -21,9 +21,9 @@ impl Checkerboard {
 }
 
 impl super::Noise2D for Checkerboard {
-  fn get(&self, x: f32, y: f32) -> f32 {
-    let x = x as isize;
-    let y = y as isize;
+  fn get(&self, p: super::Pos) -> f32 {
+    let x = p.x as isize;
+    let y = p.y as isize;
     let mut subseed = [0; ISIZE_SZ * 2];
     subseed[..ISIZE_SZ].copy_from_slice(&x.to_be_bytes());
     subseed[ISIZE_SZ..].copy_from_slice(&y.to_be_bytes());
