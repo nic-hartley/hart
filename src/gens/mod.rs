@@ -13,6 +13,7 @@ pub use test_ascii::TestAscii;
 mod test_2d;
 pub use test_2d::Test2D;
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum GenFail {
   Io(Error),
