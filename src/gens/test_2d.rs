@@ -14,16 +14,16 @@ use {
   rayon::iter::{IntoParallelIterator, ParallelExtend, ParallelIterator},
 };
 
-const WIDTH: usize = 2048;
-const HEIGHT: usize = 2048;
+const WIDTH: usize = 100;
+const HEIGHT: usize = 100;
 const HEIGHT_PER_WORKER: usize = 8;
-const PIX_WIDTH: f32 = 16.0;
-const PIX_HEIGHT: f32 = 16.0;
+const PIX_WIDTH: f32 = 10;
+const PIX_HEIGHT: f32 = 10;
 
 // the number of octaves, if we're using them
 const OCTAVES: usize = 3;
-const ZOOM: f32 = 1.05;
-const SCALE: f32 = 0.75;
+const ZOOM: f32 = 2.05;
+const SCALE: f32 = 0.8;
 
 pub struct Test2D;
 
@@ -42,7 +42,7 @@ impl super::Gen for Test2D {
     let mut subseed = Vec::with_capacity(seed.len() + 1);
     subseed.push(0);
     subseed.extend(seed);
-    // let center = Pos::of(WIDTH as f32 / PIX_WIDTH / 2.0, HEIGHT as f32 / PIX_HEIGHT / 2.0);
+    let center = Pos::of(WIDTH as f32 / PIX_WIDTH / 2.0, HEIGHT as f32 / PIX_HEIGHT / 2.0);
     let red = Checkerboard::new(&subseed).octaves().count(octaves).zoom(ZOOM).scale(SCALE).offset(Pos::zero());
     subseed[0] += 1;
     let green = Checkerboard::new(&subseed).octaves().count(octaves).zoom(ZOOM).scale(SCALE).offset(Pos::zero());
@@ -68,10 +68,10 @@ impl super::Gen for Test2D {
       for idx_y in 0..height {
         let y = start_y + idx_y;
         for x in 0..WIDTH {
-          let pos = Pos::of(x as f32 / PIX_WIDTH, y as f32 / PIX_HEIGHT);
-          let r = (red.get(pos) * 255.0) as u8;
-          let g = (green.get(pos) * 255.0) as u8;
-          let b = (blue.get(pos) * 255.0) as u8;
+          let pos = Pos::of(x as f32 / PIX_WIDTH, y as f32 / PIX_HEIGHT) - center;
+          let r = (red.get(pos) * 128.0) as u8 + 64;
+          let g = (green.get(pos) * 128.0) as u8 + 64;
+          let b = (blue.get(pos) * 128.0) as u8 + 64;
           let idx = idx_y * WIDTH * 3 + x * 3;
           data_out[idx+0] = r;
           data_out[idx+1] = g;
