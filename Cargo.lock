@@ -22,17 +22,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "arts"
-version = "0.1.0"
-dependencies = [
- "clap",
- "image",
- "rand 0.8.3",
- "rayon",
- "rust-crypto",
-]
-
-[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -195,6 +184,17 @@ checksum = "5a668f699973d0f573d15749b7002a9ac9e1f9c6b220e7b165601334c173d8de"
 dependencies = [
  "color_quant",
  "weezl",
+]
+
+[[package]]
+name = "hart"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "image",
+ "rand 0.8.3",
+ "rayon",
+ "rust-crypto",
 ]
 
 [[package]]

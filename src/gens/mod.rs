@@ -12,6 +12,8 @@ mod test_ascii;
 pub use test_ascii::TestAscii;
 mod test_2d;
 pub use test_2d::Test2D;
+mod worley;
+pub use worley::WorleyGen;
 
 #[allow(dead_code)]
 #[derive(Debug)]
@@ -39,12 +41,35 @@ impl From<ImageError> for GenFail {
 
 pub type Result<T> = std::result::Result<T, GenFail>;
 
+pub enum Category {
+  Test,
+  Basic,
+  Project,
+}
+
+impl Category {
+  pub fn all() -> [Category; 3] {
+    [ Category::Test, Category::Basic, Category::Project ]
+  }
+
+  pub fn friendly(&self) -> &'static str {
+    match self {
+      Category::Test => "test",
+      Category::Basic => "basic",
+      Category::Project => "project",
+    }
+  }
+}
+
+// TODO: Add categories to generators, use them in main
 /// A trait normalizing the interface across all generators
 pub trait Gen: Sync {
+  /// The category that the command is in, e.g. basic noise generation or tests
+  fn category(&self) -> Category;
   /// The name of the subcommand to invoke to run this generator
-  fn command(&self, ) -> &'static str;
+  fn command(&self) -> &'static str;
   /// The human-friendly name of this subcommand
-  fn about(&self, ) -> &'static str;
+  fn about(&self) -> &'static str;
   /// Set up the subcommand for this generator, to fill out any needed extra command line options.
   /// Note you _should not_ add a subcommand for your gen: the parameter is the `SubCommand` which will be added for you.
   fn setup_cmd<'a, 'b>(&self, app: App<'a, 'b>) -> App<'a, 'b>;
@@ -53,10 +78,11 @@ pub trait Gen: Sync {
 }
 
 impl dyn Gen {
-  pub fn all() -> [&'static dyn Gen; 2] {
+  pub fn all() -> [&'static dyn Gen; 3] {
     [
       &TestAscii,
       &Test2D,
+      &WorleyGen,
     ]
   }
 

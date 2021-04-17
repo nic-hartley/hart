@@ -1,21 +1,55 @@
 mod checkerboard;
 pub use checkerboard::Checkerboard;
+mod worley;
+pub use worley::Worley;
 
 // #[allow(unused_imports)]
 use std::ops::*;
 
-#[derive(PartialEq, Debug, Clone, Copy)]
+pub enum Quadrant {
+  NW = 0,
+  NE = 1,
+  SE = 2,
+  SW = 3,
+}
+
+#[derive(PartialEq, PartialOrd, Debug, Clone, Copy)]
 pub struct Pos {
-  x: f32,
-  y: f32,
+  pub x: f32,
+  pub y: f32,
 }
 
 impl Pos {
   pub fn zero() -> Self {
     Pos { x: 0.0, y: 0.0 }
   }
+
   pub fn of(x: f32, y: f32) -> Self {
     Pos { x, y }
+  }
+
+  pub fn quadrant(&self) -> Quadrant {
+    if self.x > 0.0 {
+      if self.y > 0.0 {
+        Quadrant::NW
+      } else {
+        Quadrant::SW
+      }
+    } else {
+      if self.y > 0.0 {
+        Quadrant::NE
+      } else {
+        Quadrant::SE
+      }
+    }
+  }
+
+  pub fn len_sq(&self) -> f32 {
+    self.x * self.x + self.y * self.y
+  }
+
+  pub fn len(&self) -> f32 {
+    self.len_sq().sqrt()
   }
 }
 
@@ -67,6 +101,16 @@ impl_pos_op!(assign, MulAssign, mul_assign, *=);
 impl_pos_op!(assign, DivAssign, div_assign, /=);
 impl_pos_op!(assign, RemAssign, rem_assign, %=);
 
+impl Neg for Pos {
+  type Output = Pos;
+  fn neg(self) -> Self {
+    Pos {
+      x: -self.x,
+      y: -self.y,
+    }
+  }
+}
+
 impl From<f32> for Pos {
   fn from(n: f32) -> Pos {
     Pos::of(n, n)
@@ -86,6 +130,13 @@ pub trait Noise2D {
     Self: Sized
   {
     Octaves { orig: self, count: 0, zoom: 0.0, scale: 0.0, offset: Pos::zero() }
+  }
+
+  fn invert(self) -> Invert<Self>
+  where
+    Self: Sized
+  {
+    Invert { orig: self }
   }
 }
 
@@ -128,5 +179,15 @@ impl<N: Noise2D> Noise2D for Octaves<N> {
       offset += self.offset
     }
     sum / max
+  }
+}
+
+pub struct Invert<N: Noise2D> {
+  orig: N,
+}
+
+impl<N: Noise2D> Noise2D for Invert<N> {
+  fn get(&self, p: Pos) -> f32 {
+    1.0 - self.orig.get(p)
   }
 }
