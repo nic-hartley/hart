@@ -29,7 +29,8 @@ const SCALE: f32 = 0.8;
 pub struct Test2D;
 
 impl super::Gen for Test2D {
-  fn command(&self) -> &'static str { "test:2d" }
+  fn category(&self) -> super::Category { super::Category::Test }
+  fn command(&self) -> &'static str { "2d" }
   fn about(&self) -> &'static str { "A test generator which outputs a PNG" }
   fn setup_cmd<'a, 'b>(&self, app: App<'a, 'b>) -> App<'a, 'b> {
     app.arg(Arg::with_name("octave")

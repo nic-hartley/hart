@@ -15,12 +15,7 @@ use {
 };
 
 const HEIGHT_PER_WORKER: usize = 8;
-fn validate_usize(s: String) -> Result<(), String> {
-  match s.parse::<usize>() {
-    Ok(_) => Ok(()),
-    _ => Err(format!("{} is not a nonnegative integer in range", s))
-  }
-}
+
 fn validate_pos_usize(s: String) -> Result<(), String> {
   match s.parse::<usize>() {
     Ok(i) if i > 0 => Ok(()),
@@ -31,7 +26,8 @@ fn validate_pos_usize(s: String) -> Result<(), String> {
 pub struct WorleyGen;
 
 impl super::Gen for WorleyGen {
-  fn command(&self) -> &'static str { "basic:worley" }
+  fn command(&self) -> &'static str { "worley" }
+  fn category(&self) -> super::Category { super::Category::Basic }
   fn about(&self) -> &'static str { "Generate Worley noise" }
   fn setup_cmd<'a, 'b>(&self, app: App<'a, 'b>) -> App<'a, 'b> {
     app

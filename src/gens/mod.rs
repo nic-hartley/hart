@@ -14,6 +14,8 @@ mod test_2d;
 pub use test_2d::Test2D;
 mod worley;
 pub use worley::WorleyGen;
+mod mottler;
+pub use mottler::Mottler;
 
 #[allow(dead_code)]
 #[derive(Debug)]
@@ -41,9 +43,14 @@ impl From<ImageError> for GenFail {
 
 pub type Result<T> = std::result::Result<T, GenFail>;
 
+/// Describes the type of generator the Gen implements.
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum Category {
+  /// A generator just meant to be used to test other infrastructure
   Test,
+  /// A single, simple generator of a standard type of noise
   Basic,
+  /// An art piece, built out of other generators etc.
   Project,
 }
 
@@ -52,11 +59,19 @@ impl Category {
     [ Category::Test, Category::Basic, Category::Project ]
   }
 
-  pub fn friendly(&self) -> &'static str {
+  pub fn name(&self) -> &'static str {
     match self {
       Category::Test => "test",
       Category::Basic => "basic",
       Category::Project => "project",
+    }
+  }
+
+  pub fn description(&self) -> &'static str {
+    match self {
+      Category::Test => "A generator just meant to be used to test other infrastructure",
+      Category::Basic => "A single, simple generator of noise, maybe with octaves or inversion applied",
+      Category::Project => "An art piece, built out of other generators etc.",
     }
   }
 }
@@ -78,11 +93,12 @@ pub trait Gen: Sync {
 }
 
 impl dyn Gen {
-  pub fn all() -> [&'static dyn Gen; 3] {
+  pub fn all() -> [&'static dyn Gen; 4] {
     [
       &TestAscii,
       &Test2D,
       &WorleyGen,
+      &Mottler,
     ]
   }
 

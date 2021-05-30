@@ -19,6 +19,7 @@ pub struct Pos {
   pub y: f32,
 }
 
+#[allow(unused)]
 impl Pos {
   pub fn zero() -> Self {
     Pos { x: 0.0, y: 0.0 }

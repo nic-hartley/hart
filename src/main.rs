@@ -1,5 +1,6 @@
 use {
   std::{
+    collections::HashMap,
     fs,
     io::{
       self,
@@ -21,6 +22,7 @@ fn mk_app() -> App<'static, 'static> {
     .author("Nic Hartley <the@redfennec.dev>")
     .about("Randomly generated art")
     .setting(AppSettings::SubcommandRequiredElseHelp)
+    .setting(AppSettings::VersionlessSubcommands)
     .subcommand(SubCommand::with_name("completions")
       .about("Generate shell completions")
       .arg(Arg::with_name("shell")
@@ -31,8 +33,18 @@ fn mk_app() -> App<'static, 'static> {
         .long("output")
         .help("The path to write the completion to")));
 
+  let mut category_cmds = HashMap::new();
+  for category in gens::Category::all().iter() {
+    category_cmds.insert(*category,
+      SubCommand::with_name(category.name())
+        .about(category.description())
+        .setting(AppSettings::SubcommandRequiredElseHelp)
+        .setting(AppSettings::VersionlessSubcommands)
+    );
+  }
+
   for gen in &gens::Gen::all() {
-    let subcmd = SubCommand::with_name(gen.command())
+    let gen_cmd = SubCommand::with_name(gen.command())
       .about(gen.about())
       .arg(Arg::with_name("seed")
         .long("seed")
@@ -49,8 +61,15 @@ fn mk_app() -> App<'static, 'static> {
         .help("Path to write the output to; extension automatically appended")
         .required(true)
         .takes_value(true));
-    let added = gen.setup_cmd(subcmd);
-    app = app.subcommand(added);
+    let added = gen.setup_cmd(gen_cmd);
+
+    let cat_cmd = category_cmds.remove(&gen.category()).unwrap();
+    let with_gen = cat_cmd.subcommand(added);
+    category_cmds.insert(gen.category(), with_gen);
+  }
+
+  for (_, subcmd) in category_cmds.into_iter() {
+    app = app.subcommand(subcmd);
   }
 
   app
