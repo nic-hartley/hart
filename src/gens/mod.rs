@@ -102,11 +102,10 @@ impl dyn Gen {
     ]
   }
 
-  pub fn by_command(name: &str) -> Option<&'static dyn Gen> {
-    let all = Self::all();
-    for i in 0..all.len() {
-      if all[i].command() == name {
-        return Some(all[i]);
+  pub fn by_cli(category: &str, name: &str) -> Option<&'static dyn Gen> {
+    for cand in Gen::all().iter() {
+      if cand.category().name() == category && cand.command() == name {
+        return Some(*cand);
       }
     }
     None

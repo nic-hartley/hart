@@ -23,6 +23,7 @@ fn mk_app() -> App<'static, 'static> {
     .about("Randomly generated art")
     .setting(AppSettings::SubcommandRequiredElseHelp)
     .setting(AppSettings::VersionlessSubcommands)
+    .setting(AppSettings::DisableHelpSubcommand)
     .subcommand(SubCommand::with_name("completions")
       .about("Generate shell completions")
       .arg(Arg::with_name("shell")
@@ -40,7 +41,8 @@ fn mk_app() -> App<'static, 'static> {
         .about(category.description())
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::VersionlessSubcommands)
-    );
+        .setting(AppSettings::DisableHelpSubcommand)
+      );
   }
 
   for gen in &gens::Gen::all() {
@@ -78,13 +80,13 @@ fn mk_app() -> App<'static, 'static> {
 fn main() {
   let matches = mk_app().get_matches();
 
-  let (subcmd, args) = matches.subcommand();
-  let args = args.expect("How??");
+  let (category, catargs) = matches.subcommand();
+  let catargs = catargs.expect("How??");
 
-  if subcmd == "completions" {
+  if category == "completions" {
     // neither unwrap will panic: --shell has a default value and the only valid options are Shell::variants()
-    let shell = Shell::from_str(args.value_of("shell").unwrap()).unwrap();
-    match args.value_of("output") {
+    let shell = Shell::from_str(catargs.value_of("shell").unwrap()).unwrap();
+    match catargs.value_of("output") {
       Some(path) => {
         let file = fs::File::create(path).expect("Failed to open output");
         mk_app().gen_completions_to("hart", shell, &mut BufWriter::new(file));
@@ -93,23 +95,28 @@ fn main() {
         mk_app().gen_completions_to("hart", shell, &mut io::stdout())
       }
     }
-  } else if let Some(gen) = gens::Gen::by_command(subcmd) {
-    let seed = if let Some(data) = matches.value_of("seed") {
-      data.as_bytes().to_vec()
-    } else if let Some(path) = matches.value_of("seed-file") {
-      fs::read(path).expect("Failed to open seed file")
-    } else {
-      println!("Enter some text as a seed:");
-      let mut line = String::new();
-      io::stdin().read_line(&mut line).expect("Failed to read input");
-      line.as_bytes().to_vec()
-    };
-
-    let output_path = matches.value_of("output").unwrap();
-    let mut output = BufWriter::new(fs::File::create(output_path).expect("Failed to open output"));
-
-    gen.run(args, &seed, &mut output).expect("Failed to generate");
   } else {
-    panic!("Invalid subcommand??");
+    let (gen, genargs) = catargs.subcommand();
+    let genargs = genargs.expect("How????");
+
+    if let Some(gen) = gens::Gen::by_cli(category, gen) {
+      let seed = if let Some(data) = genargs.value_of("seed") {
+        data.as_bytes().to_vec()
+      } else if let Some(path) = genargs.value_of("seed-file") {
+        fs::read(path).expect("Failed to open seed file")
+      } else {
+        println!("Enter some text as a seed:");
+        let mut line = String::new();
+        io::stdin().read_line(&mut line).expect("Failed to read input");
+        line.as_bytes().to_vec()
+      };
+
+      let output_path = genargs.value_of("output").unwrap();
+      let mut output = BufWriter::new(fs::File::create(output_path).expect("Failed to open output"));
+
+      gen.run(genargs, &seed, &mut output).expect("Failed to generate");
+    } else {
+      panic!("Invalid subcommand??");
+    }
   }
 }
