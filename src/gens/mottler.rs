@@ -29,6 +29,13 @@ fn decode_pct(mut s: &str) -> Result<f32, String> {
   }
 }
 
+fn lerp(from: u8, to: u8, amt: f32) -> u8 {
+  let from_scaled = from as f32 * (1.0 - amt);
+  let to_scaled = to as f32 * amt;
+  let sum = from_scaled + to_scaled;
+  return sum as u8;
+}
+
 pub struct Mottler;
 
 impl super::Gen for Mottler {
@@ -57,13 +64,13 @@ impl super::Gen for Mottler {
             .short("s")
             .long("start")
             .validator(validate_pct)
-            .default_value("25%")
+            .default_value("10%")
             .help("The starting point for the gradient, as a percentage of image size"))
           .arg(Arg::with_name("end")
             .short("e")
             .long("end")
             .validator(validate_pct)
-            .default_value("75%")
+            .default_value("90%")
             .help("The ending point for the gradient, as a percentage of image size"))
           .arg(Arg::with_name("algorithm")
             .short("a")
@@ -72,9 +79,16 @@ impl super::Gen for Mottler {
             .default_value("worley")
             .help("The algorithm to generate noise with"))
           .arg(Arg::with_name("algo-scale")
-            .long("algorithm-scale")
-            .default_value("5%")
+            .long("scale")
+            .default_value("2.5%")
             .help("How much of the image's width should be covered by one unit in the noise sampling space"))
+          .arg(Arg::with_name("algo-stretch")
+            .long("stretch")
+            .default_value("2")
+            .help("How much more to scale the noise sampling space in the gradient direction"))
+          .arg(Arg::with_name("algo-sharp")
+            .long("sharp")
+            .help("If provided, the mottling will use a hard cutoff rather than a smooth blend"))
     }
     fn run(&self, opts: &ArgMatches, seed: &[u8], output: &mut dyn io::Write) -> super::Result<()> {
       let img_from_path = opts.value_of("from").unwrap();
@@ -102,9 +116,16 @@ impl super::Gen for Mottler {
       let width = width as usize;
       let height = height as usize;
 
-      let pix_sz = decode_pct(opts.value_of("algo-scale").unwrap()).unwrap();
+      let pix_pct = decode_pct(opts.value_of("algo-scale").unwrap()).unwrap();
+      let pix_sz = width as f32 * pix_pct;
+
+      let dir_stretch: f32 = opts.value_of("algo-stretch").unwrap().parse().unwrap();
+
+      let sharp = opts.is_present("algo-sharp");
+
       let start_pct = decode_pct(opts.value_of("start").unwrap()).unwrap();
       let start = width as f32 * start_pct;
+      
       let end_pct = decode_pct(opts.value_of("end").unwrap()).unwrap();
       let end = width as f32 * end_pct;
 
@@ -112,27 +133,29 @@ impl super::Gen for Mottler {
         "perlin" => unimplemented!("perlin noise"),
         "worley" => Worley::new(seed),
         _ => unreachable!("Option values set with clap"),
-      };
+      }.invert();
 
       let mut rows = Vec::with_capacity(height);
       let start_time = Instant::now();
       rows.par_extend((0..rows.capacity()).into_par_iter().map(|row| {
         let mut data_out = vec![0; width * 3];
         for x in 0..width {
-          let threshold = if (x as f32) < start {
-            0.0
-          } else if (x as f32) > end {
-            1.0
+          let pos = Pos::of(x as f32 / pix_sz / dir_stretch, row as f32 / pix_sz);
+          let progress = ((x as f32 - start) / (end - start)).clamp(0.0, 1.0);
+          let (r, g, b) = if sharp {
+            let (r, g, b, _) = if noise.get(pos) < 1.0 - progress {
+              &img_from
+            } else {
+              &img_to
+            }.get_pixel(x as u32, row as u32).channels4();
+            (r, g, b)
           } else {
-            (x as f32 - start) / (end - start)
+            let bias = progress * 2.0 - 1.0;
+            let weight = (noise.get(pos) + bias).clamp(0.0, 1.0);
+            let (fr, fg, fb, _) = img_from.get_pixel(x as u32, row as u32).channels4();
+            let (tr, tg, tb, _) = img_to.get_pixel(x as u32, row as u32).channels4();
+            (lerp(fr, tr, weight), lerp(fg, tg, weight), lerp(fb, tb, weight))
           };
-          let pos = Pos::of(x as f32 * pix_sz, row as f32 * pix_sz);
-          let color = if noise.get(pos) > threshold {
-            &img_from
-          } else {
-            &img_to
-          }.get_pixel(x as u32, row as u32);
-          let (r, g, b, _) = color.channels4();
           data_out[x*3 + 0] = r;
           data_out[x*3 + 1] = g;
           data_out[x*3 + 2] = b;
@@ -147,7 +170,7 @@ impl super::Gen for Mottler {
         pixels.extend(row);
       }
 
-      let encoder = PngEncoder::new_with_quality(output, CompressionType::Fast, FilterType::Sub);
+      let encoder = PngEncoder::new_with_quality(output, CompressionType::Rle, FilterType::Sub);
       encoder.encode(&pixels, width as u32, height as u32, ColorType::Rgb8)?;
 
       println!("Finished");
